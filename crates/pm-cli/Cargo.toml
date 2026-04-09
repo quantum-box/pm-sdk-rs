@@ -1,0 +1,19 @@
+[package]
+name = "pm-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "pm-sdk"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+pm-core = { path = "../pm-core" }
+pm-linear = { path = "../pm-linear" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+mockito = { workspace = true }
