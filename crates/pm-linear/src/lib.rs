@@ -45,7 +45,7 @@ impl LinearAdapter {
     ) -> PmResult<Value> {
         let resp = self
             .client
-            .post(&format!("{}/graphql", self.base_url))
+            .post(format!("{}/graphql", self.base_url))
             .header("Authorization", &self.token)
             .header("Content-Type", "application/json")
             .json(&json!({ "query": query, "variables": variables }))
