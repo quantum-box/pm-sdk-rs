@@ -2,6 +2,13 @@
 name = "pm-core"
 version = "0.1.0"
 edition = "2021"
+description = "Platform-agnostic traits and domain models for project management SDKs"
+license = "MIT"
+repository = "https://github.com/quantum-box/pm-sdk-rs"
+homepage = "https://github.com/quantum-box/pm-sdk-rs"
+keywords = ["project-management", "sdk", "async", "linear", "asana"]
+categories = ["api-bindings", "asynchronous"]
+authors = ["quantum-box"]
 
 [dependencies]
 async-trait = { workspace = true }

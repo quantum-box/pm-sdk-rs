@@ -1,7 +1,23 @@
+//! Linear GraphQL adapter implementing [`pm_core::PmAdapter`].
+//!
+//! # Usage
+//!
+//! ```no_run
+//! use pm_linear::LinearAdapter;
+//! use pm_core::{PmAdapter, PageRequest};
+//!
+//! #[tokio::main]
+//! async fn main() {
+//!     let adapter = LinearAdapter::new("lin_api_xxx");
+//!     let issues = adapter.list_issues(PageRequest::default()).await.unwrap();
+//! }
+//! ```
+
 use pm_core::*;
 use reqwest::Client;
 use serde_json::{json, Value};
 
+/// Linear API adapter. Authenticates via a Linear API token.
 pub struct LinearAdapter {
     client: Client,
     token: String,

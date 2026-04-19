@@ -1,7 +1,23 @@
+//! Asana REST adapter implementing [`pm_core::PmAdapter`].
+//!
+//! # Usage
+//!
+//! ```no_run
+//! use pm_asana::AsanaAdapter;
+//! use pm_core::{PmAdapter, PageRequest};
+//!
+//! #[tokio::main]
+//! async fn main() {
+//!     let adapter = AsanaAdapter::from_env(); // reads ASANA_PAT and ASANA_WORKSPACE_GID
+//!     let tasks = adapter.list_issues(PageRequest::default()).await.unwrap();
+//! }
+//! ```
+
 use pm_core::*;
 use reqwest::Client;
 use serde_json::{json, Value};
 
+/// Asana REST API adapter. Authenticates via a Personal Access Token.
 pub struct AsanaAdapter {
     client: Client,
     token: String,
