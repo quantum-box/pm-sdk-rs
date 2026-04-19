@@ -42,8 +42,7 @@ async fn list_issues_returns_mapped_issues() {
         .create_async()
         .await;
 
-    let adapter =
-        LinearAdapter::new("token").with_base_url(server.url());
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
     let issues = adapter
         .list_issues(PageRequest {
             limit: Some(10),
@@ -81,8 +80,7 @@ async fn create_issue_sends_mutation() {
         .create_async()
         .await;
 
-    let adapter =
-        LinearAdapter::new("token").with_base_url(server.url());
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
     let issue = adapter
         .create_issue(CreateIssueRequest {
             title: "New feature".into(),
@@ -115,8 +113,7 @@ async fn update_issue_sends_mutation() {
         .create_async()
         .await;
 
-    let adapter =
-        LinearAdapter::new("token").with_base_url(server.url());
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
     let issue = adapter
         .update_issue(
             "iss_1",
@@ -155,8 +152,7 @@ async fn search_returns_results() {
         .create_async()
         .await;
 
-    let adapter =
-        LinearAdapter::new("token").with_base_url(server.url());
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
     let results = adapter
         .search(SearchRequest {
             query: "auth".into(),
@@ -187,12 +183,8 @@ async fn list_projects_returns_mapped() {
         .create_async()
         .await;
 
-    let adapter =
-        LinearAdapter::new("token").with_base_url(server.url());
-    let projects = adapter
-        .list_projects(PageRequest::default())
-        .await
-        .unwrap();
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
+    let projects = adapter.list_projects(PageRequest::default()).await.unwrap();
 
     assert_eq!(projects.len(), 1);
     assert_eq!(projects[0].name, "Core");
@@ -215,12 +207,8 @@ async fn list_teams_returns_mapped() {
         .create_async()
         .await;
 
-    let adapter =
-        LinearAdapter::new("token").with_base_url(server.url());
-    let teams = adapter
-        .list_teams(PageRequest::default())
-        .await
-        .unwrap();
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
+    let teams = adapter.list_teams(PageRequest::default()).await.unwrap();
 
     assert_eq!(teams.len(), 1);
     assert_eq!(teams[0].key.as_deref(), Some("ENG"));
@@ -247,8 +235,7 @@ async fn create_comment_sends_mutation() {
         .create_async()
         .await;
 
-    let adapter =
-        LinearAdapter::new("token").with_base_url(server.url());
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
     let comment = adapter
         .create_comment(
             "iss_1",
@@ -278,8 +265,7 @@ async fn api_error_is_propagated() {
         .create_async()
         .await;
 
-    let adapter =
-        LinearAdapter::new("token").with_base_url(server.url());
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
     let err = adapter.get_issue("bad").await.unwrap_err();
     assert!(err.to_string().contains("Not authorized"));
 }

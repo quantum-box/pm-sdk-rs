@@ -93,8 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let adapter: Box<dyn PmAdapter> = match cli.platform {
         Platform::Linear => {
-            let token = std::env::var("LINEAR_API_KEY")
-                .expect("LINEAR_API_KEY required");
+            let token = std::env::var("LINEAR_API_KEY").expect("LINEAR_API_KEY required");
             Box::new(LinearAdapter::new(&token))
         }
     };
@@ -174,16 +173,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             print_json(&teams);
         }
         Command::ListComments { issue_id } => {
-            let comments =
-                adapter.list_comments(&issue_id).await?;
+            let comments = adapter.list_comments(&issue_id).await?;
             print_json(&comments);
         }
         Command::AddComment { issue_id, body } => {
             let comment = adapter
-                .create_comment(
-                    &issue_id,
-                    CreateCommentRequest { body },
-                )
+                .create_comment(&issue_id, CreateCommentRequest { body })
                 .await?;
             print_json(&comment);
         }
@@ -202,8 +197,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn print_json<T: serde::Serialize>(v: &T) {
-    println!(
-        "{}",
-        serde_json::to_string_pretty(v).unwrap()
-    );
+    println!("{}", serde_json::to_string_pretty(v).unwrap());
 }

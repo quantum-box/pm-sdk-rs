@@ -20,9 +20,7 @@ pub struct Issue {
     pub updated_at: Option<String>,
 }
 
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IssuePriority {
     None,
     Urgent,

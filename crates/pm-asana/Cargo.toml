@@ -2,6 +2,13 @@
 name = "pm-asana"
 version = "0.1.0"
 edition = "2021"
+description = "Asana REST adapter for pm-sdk-rs"
+license = "MIT"
+repository = "https://github.com/quantum-box/pm-sdk-rs"
+homepage = "https://github.com/quantum-box/pm-sdk-rs"
+keywords = ["asana", "project-management", "rest", "sdk", "async"]
+categories = ["api-bindings", "asynchronous"]
+authors = ["quantum-box"]
 
 [dependencies]
 async-trait = { workspace = true }

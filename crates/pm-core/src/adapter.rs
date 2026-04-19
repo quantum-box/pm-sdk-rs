@@ -12,53 +12,32 @@ pub trait PmAdapter: Send + Sync {
 
     // ── Issues ──────────────────────────────────────
 
-    async fn list_issues(
-        &self,
-        page: PageRequest,
-    ) -> PmResult<Vec<Issue>>;
+    async fn list_issues(&self, page: PageRequest) -> PmResult<Vec<Issue>>;
 
     async fn get_issue(&self, id: &str) -> PmResult<Issue>;
 
-    async fn create_issue(
-        &self,
-        input: CreateIssueRequest,
-    ) -> PmResult<Issue>;
+    async fn create_issue(&self, input: CreateIssueRequest) -> PmResult<Issue>;
 
-    async fn update_issue(
-        &self,
-        id: &str,
-        input: UpdateIssueRequest,
-    ) -> PmResult<Issue>;
+    async fn update_issue(&self, id: &str, input: UpdateIssueRequest) -> PmResult<Issue>;
 
     async fn delete_issue(&self, id: &str) -> PmResult<()> {
         let _ = id;
-        Err(crate::PmError::UnsupportedOperation(
-            "delete_issue".into(),
-        ))
+        Err(crate::PmError::UnsupportedOperation("delete_issue".into()))
     }
 
     // ── Projects ────────────────────────────────────
 
-    async fn list_projects(
-        &self,
-        page: PageRequest,
-    ) -> PmResult<Vec<Project>>;
+    async fn list_projects(&self, page: PageRequest) -> PmResult<Vec<Project>>;
 
     async fn get_project(&self, id: &str) -> PmResult<Project>;
 
     // ── Teams ───────────────────────────────────────
 
-    async fn list_teams(
-        &self,
-        page: PageRequest,
-    ) -> PmResult<Vec<Team>>;
+    async fn list_teams(&self, page: PageRequest) -> PmResult<Vec<Team>>;
 
     // ── Comments ────────────────────────────────────
 
-    async fn list_comments(
-        &self,
-        issue_id: &str,
-    ) -> PmResult<Vec<Comment>>;
+    async fn list_comments(&self, issue_id: &str) -> PmResult<Vec<Comment>>;
 
     async fn create_comment(
         &self,
@@ -68,8 +47,5 @@ pub trait PmAdapter: Send + Sync {
 
     // ── Search ──────────────────────────────────────
 
-    async fn search(
-        &self,
-        input: SearchRequest,
-    ) -> PmResult<Vec<SearchResult>>;
+    async fn search(&self, input: SearchRequest) -> PmResult<Vec<SearchResult>>;
 }

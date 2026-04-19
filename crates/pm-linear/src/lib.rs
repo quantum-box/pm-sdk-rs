@@ -1,7 +1,23 @@
+//! Linear GraphQL adapter implementing [`pm_core::PmAdapter`].
+//!
+//! # Usage
+//!
+//! ```no_run
+//! use pm_linear::LinearAdapter;
+//! use pm_core::{PmAdapter, PageRequest};
+//!
+//! #[tokio::main]
+//! async fn main() {
+//!     let adapter = LinearAdapter::new("lin_api_xxx");
+//!     let issues = adapter.list_issues(PageRequest::default()).await.unwrap();
+//! }
+//! ```
+
 use pm_core::*;
 use reqwest::Client;
 use serde_json::{json, Value};
 
+/// Linear API adapter. Authenticates via a Linear API token.
 pub struct LinearAdapter {
     client: Client,
     token: String,
@@ -22,14 +38,10 @@ impl LinearAdapter {
         self
     }
 
-    async fn graphql(
-        &self,
-        query: &str,
-        variables: Value,
-    ) -> PmResult<Value> {
+    async fn graphql(&self, query: &str, variables: Value) -> PmResult<Value> {
         let resp = self
             .client
-            .post(&format!("{}/graphql", self.base_url))
+            .post(format!("{}/graphql", self.base_url))
             .header("Authorization", &self.token)
             .header("Content-Type", "application/json")
             .json(&json!({ "query": query, "variables": variables }))
@@ -37,14 +49,13 @@ impl LinearAdapter {
             .await?;
 
         let status = resp.status().as_u16();
-        let body: Value = resp.json().await.map_err(|e| {
-            PmError::Parse(e.to_string())
-        })?;
+        let body: Value = resp
+            .json()
+            .await
+            .map_err(|e| PmError::Parse(e.to_string()))?;
 
         if let Some(errors) = body.get("errors") {
-            let msg = errors[0]["message"]
-                .as_str()
-                .unwrap_or("Unknown error");
+            let msg = errors[0]["message"].as_str().unwrap_or("Unknown error");
             return Err(PmError::Api {
                 status,
                 message: msg.to_string(),
@@ -65,25 +76,15 @@ fn map_issue(v: &Value) -> Issue {
         description: v["description"].as_str().map(String::from),
         status: v["state"]["name"].as_str().map(String::from),
         priority: v["priority"].as_u64().map(map_priority),
-        assignee_id: v["assignee"]["id"]
-            .as_str()
-            .map(String::from),
-        assignee_name: v["assignee"]["name"]
-            .as_str()
-            .map(String::from),
-        project_id: v["project"]["id"]
-            .as_str()
-            .map(String::from),
-        project_name: v["project"]["name"]
-            .as_str()
-            .map(String::from),
+        assignee_id: v["assignee"]["id"].as_str().map(String::from),
+        assignee_name: v["assignee"]["name"].as_str().map(String::from),
+        project_id: v["project"]["id"].as_str().map(String::from),
+        project_name: v["project"]["name"].as_str().map(String::from),
         labels: v["labels"]["nodes"]
             .as_array()
             .map(|a| {
                 a.iter()
-                    .filter_map(|l| {
-                        l["name"].as_str().map(String::from)
-                    })
+                    .filter_map(|l| l["name"].as_str().map(String::from))
                     .collect()
             })
             .unwrap_or_default(),
@@ -146,11 +147,9 @@ fn str_field(v: &Value, key: &str) -> String {
 }
 
 const ISSUE_FIELDS: &str = "id identifier title description priority createdAt updatedAt state { name } assignee { id name } project { id name } labels { nodes { name } }";
-const PROJECT_FIELDS: &str =
-    "id name description state createdAt updatedAt";
+const PROJECT_FIELDS: &str = "id name description state createdAt updatedAt";
 const TEAM_FIELDS: &str = "id name key";
-const COMMENT_FIELDS: &str =
-    "id body createdAt issue { id } user { name }";
+const COMMENT_FIELDS: &str = "id body createdAt issue { id } user { name }";
 
 #[async_trait::async_trait]
 impl PmAdapter for LinearAdapter {
@@ -158,10 +157,7 @@ impl PmAdapter for LinearAdapter {
         "linear"
     }
 
-    async fn list_issues(
-        &self,
-        page: PageRequest,
-    ) -> PmResult<Vec<Issue>> {
+    async fn list_issues(&self, page: PageRequest) -> PmResult<Vec<Issue>> {
         let limit = page.limit.unwrap_or(50);
         let q = format!(
             "query($first: Int, $after: String) {{ issues(first: $first, after: $after) {{ nodes {{ {ISSUE_FIELDS} }} }} }}"
@@ -179,18 +175,12 @@ impl PmAdapter for LinearAdapter {
     }
 
     async fn get_issue(&self, id: &str) -> PmResult<Issue> {
-        let q = format!(
-            "query($id: String!) {{ issue(id: $id) {{ {ISSUE_FIELDS} }} }}"
-        );
-        let data =
-            self.graphql(&q, json!({ "id": id })).await?;
+        let q = format!("query($id: String!) {{ issue(id: $id) {{ {ISSUE_FIELDS} }} }}");
+        let data = self.graphql(&q, json!({ "id": id })).await?;
         Ok(map_issue(&data["issue"]))
     }
 
-    async fn create_issue(
-        &self,
-        input: CreateIssueRequest,
-    ) -> PmResult<Issue> {
+    async fn create_issue(&self, input: CreateIssueRequest) -> PmResult<Issue> {
         let mut vars = json!({
             "title": input.title,
         });
@@ -205,26 +195,17 @@ impl PmAdapter for LinearAdapter {
             obj.insert("assigneeId".into(), json!(aid));
         }
         if let Some(p) = &input.priority {
-            obj.insert(
-                "priority".into(),
-                json!(priority_to_int(p)),
-            );
+            obj.insert("priority".into(), json!(priority_to_int(p)));
         }
 
         let q = format!(
             "mutation($input: IssueCreateInput!) {{ issueCreate(input: $input) {{ issue {{ {ISSUE_FIELDS} }} }} }}"
         );
-        let data = self
-            .graphql(&q, json!({ "input": vars }))
-            .await?;
+        let data = self.graphql(&q, json!({ "input": vars })).await?;
         Ok(map_issue(&data["issueCreate"]["issue"]))
     }
 
-    async fn update_issue(
-        &self,
-        id: &str,
-        input: UpdateIssueRequest,
-    ) -> PmResult<Issue> {
+    async fn update_issue(&self, id: &str, input: UpdateIssueRequest) -> PmResult<Issue> {
         let mut vars = json!({});
         let obj = vars.as_object_mut().unwrap();
         if let Some(t) = &input.title {
@@ -240,34 +221,23 @@ impl PmAdapter for LinearAdapter {
             obj.insert("assigneeId".into(), json!(a));
         }
         if let Some(p) = &input.priority {
-            obj.insert(
-                "priority".into(),
-                json!(priority_to_int(p)),
-            );
+            obj.insert("priority".into(), json!(priority_to_int(p)));
         }
 
         let q = format!(
             "mutation($id: String!, $input: IssueUpdateInput!) {{ issueUpdate(id: $id, input: $input) {{ issue {{ {ISSUE_FIELDS} }} }} }}"
         );
-        let data = self
-            .graphql(&q, json!({ "id": id, "input": vars }))
-            .await?;
+        let data = self.graphql(&q, json!({ "id": id, "input": vars })).await?;
         Ok(map_issue(&data["issueUpdate"]["issue"]))
     }
 
-    async fn list_projects(
-        &self,
-        page: PageRequest,
-    ) -> PmResult<Vec<Project>> {
+    async fn list_projects(&self, page: PageRequest) -> PmResult<Vec<Project>> {
         let limit = page.limit.unwrap_or(50);
         let q = format!(
             "query($first: Int, $after: String) {{ projects(first: $first, after: $after) {{ nodes {{ {PROJECT_FIELDS} }} }} }}"
         );
         let data = self
-            .graphql(
-                &q,
-                json!({ "first": limit, "after": page.after }),
-            )
+            .graphql(&q, json!({ "first": limit, "after": page.after }))
             .await?;
         let nodes = data["projects"]["nodes"]
             .as_array()
@@ -277,24 +247,17 @@ impl PmAdapter for LinearAdapter {
     }
 
     async fn get_project(&self, id: &str) -> PmResult<Project> {
-        let q = format!(
-            "query($id: String!) {{ project(id: $id) {{ {PROJECT_FIELDS} }} }}"
-        );
-        let data =
-            self.graphql(&q, json!({ "id": id })).await?;
+        let q = format!("query($id: String!) {{ project(id: $id) {{ {PROJECT_FIELDS} }} }}");
+        let data = self.graphql(&q, json!({ "id": id })).await?;
         Ok(map_project(&data["project"]))
     }
 
-    async fn list_teams(
-        &self,
-        page: PageRequest,
-    ) -> PmResult<Vec<Team>> {
+    async fn list_teams(&self, page: PageRequest) -> PmResult<Vec<Team>> {
         let limit = page.limit.unwrap_or(50);
         let q = format!(
             "query($first: Int) {{ teams(first: $first) {{ nodes {{ {TEAM_FIELDS} }} }} }}"
         );
-        let data =
-            self.graphql(&q, json!({ "first": limit })).await?;
+        let data = self.graphql(&q, json!({ "first": limit })).await?;
         let nodes = data["teams"]["nodes"]
             .as_array()
             .cloned()
@@ -302,15 +265,11 @@ impl PmAdapter for LinearAdapter {
         Ok(nodes.iter().map(map_team).collect())
     }
 
-    async fn list_comments(
-        &self,
-        issue_id: &str,
-    ) -> PmResult<Vec<Comment>> {
+    async fn list_comments(&self, issue_id: &str) -> PmResult<Vec<Comment>> {
         let q = format!(
             "query($id: String!) {{ issue(id: $id) {{ comments {{ nodes {{ {COMMENT_FIELDS} }} }} }} }}"
         );
-        let data =
-            self.graphql(&q, json!({ "id": issue_id })).await?;
+        let data = self.graphql(&q, json!({ "id": issue_id })).await?;
         let nodes = data["issue"]["comments"]["nodes"]
             .as_array()
             .cloned()
@@ -335,19 +294,13 @@ impl PmAdapter for LinearAdapter {
         Ok(map_comment(&data["commentCreate"]["comment"]))
     }
 
-    async fn search(
-        &self,
-        input: SearchRequest,
-    ) -> PmResult<Vec<SearchResult>> {
+    async fn search(&self, input: SearchRequest) -> PmResult<Vec<SearchResult>> {
         let limit = input.limit.unwrap_or(25);
         let q = format!(
             "query($term: String!, $first: Int) {{ searchIssues(term: $term, first: $first) {{ nodes {{ {ISSUE_FIELDS} }} }} }}"
         );
         let data = self
-            .graphql(
-                &q,
-                json!({ "term": input.query, "first": limit }),
-            )
+            .graphql(&q, json!({ "term": input.query, "first": limit }))
             .await?;
         let nodes = data["searchIssues"]["nodes"]
             .as_array()
@@ -357,13 +310,9 @@ impl PmAdapter for LinearAdapter {
             .iter()
             .map(|v| SearchResult {
                 id: str_field(v, "id"),
-                identifier: v["identifier"]
-                    .as_str()
-                    .map(String::from),
+                identifier: v["identifier"].as_str().map(String::from),
                 title: str_field(v, "title"),
-                status: v["state"]["name"]
-                    .as_str()
-                    .map(String::from),
+                status: v["state"]["name"].as_str().map(String::from),
             })
             .collect())
     }

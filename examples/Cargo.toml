@@ -1,0 +1,18 @@
+[package]
+name = "examples"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[example]]
+name = "linear_list_issues"
+
+[[example]]
+name = "asana_list_tasks"
+
+[dependencies]
+pm-core = { path = "../crates/pm-core" }
+pm-linear = { path = "../crates/pm-linear" }
+pm-asana = { path = "../crates/pm-asana" }
+anyhow = "1"
+tokio = { workspace = true }

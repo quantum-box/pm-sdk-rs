@@ -2,6 +2,13 @@
 name = "pm-cli"
 version = "0.1.0"
 edition = "2021"
+description = "CLI tool for interacting with project management platforms via pm-sdk-rs"
+license = "MIT"
+repository = "https://github.com/quantum-box/pm-sdk-rs"
+homepage = "https://github.com/quantum-box/pm-sdk-rs"
+keywords = ["cli", "project-management", "linear", "asana", "sdk"]
+categories = ["command-line-utilities"]
+authors = ["quantum-box"]
 
 [[bin]]
 name = "pm-sdk"
