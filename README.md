@@ -1,5 +1,6 @@
 # pm-sdk-rs
 
+[![CI](https://github.com/quantum-box/pm-sdk-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/quantum-box/pm-sdk-rs/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/pm-core.svg)](https://crates.io/crates/pm-core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 

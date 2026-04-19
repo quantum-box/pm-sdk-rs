@@ -252,6 +252,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "examples"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "pm-asana",
+ "pm-core",
+ "pm-linear",
+ "tokio",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
