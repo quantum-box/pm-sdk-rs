@@ -2,31 +2,58 @@
 
 ## Prerequisites
 
-- Rust stable (latest)
-- `cargo clippy` and `cargo fmt` must pass
+- Rust stable (latest) — install via [rustup](https://rustup.rs/)
+- `cargo-nextest` for running tests (`cargo install cargo-nextest`)
 
-## Development
+## Setup
 
 ```bash
 git clone https://github.com/quantum-box/pm-sdk-rs.git
 cd pm-sdk-rs
-cargo build --all
-cargo test --all
+rustup show   # installs toolchain from rust-toolchain.toml if present
 ```
+
+## Build
+
+```bash
+cargo build --workspace
+```
+
+## Test
+
+```bash
+# preferred
+cargo nextest run --workspace
+
+# fallback if nextest is not installed
+cargo test --workspace
+```
+
+## Lint & Format
+
+```bash
+cargo clippy --workspace -- -D warnings
+cargo fmt --all
+```
+
+Both must pass before opening a PR.
 
 ## Adding a new adapter
 
 1. Create a new crate under `crates/` following the pattern in `pm-linear` or `pm-asana`.
 2. Implement `PmAdapter` from `pm-core`.
 3. Add the crate to the workspace `Cargo.toml`.
-4. Add a usage example to `examples/`.
+4. Add a usage example under `examples/examples/`.
 
 ## Pull Requests
 
+- Branch name: `feature/<short-description>` (e.g. `feature/plt-123-add-notion-adapter`)
+- PR title must follow [Conventional Commits](https://www.conventionalcommits.org/):
+  `<type>(<scope>): <description>` — e.g. `feat(pm-linear): add team filter support`
 - One logical change per PR.
-- `cargo clippy --all -- -D warnings` must pass.
+- `cargo clippy --workspace -- -D warnings` must pass.
 - `cargo fmt --all -- --check` must pass.
-- Tests must pass: `cargo test --all`.
+- Tests must pass: `cargo nextest run --workspace`.
 
 ## License
 

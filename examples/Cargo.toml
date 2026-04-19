@@ -10,6 +10,12 @@ name = "linear_list_issues"
 [[example]]
 name = "asana_list_tasks"
 
+[[example]]
+name = "fetch_linear_issues"
+
+[[example]]
+name = "fetch_asana_tasks"
+
 [dependencies]
 pm-core = { path = "../crates/pm-core" }
 pm-linear = { path = "../crates/pm-linear" }
