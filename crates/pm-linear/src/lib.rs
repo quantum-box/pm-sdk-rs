@@ -17,6 +17,8 @@ use pm_core::*;
 use reqwest::Client;
 use serde_json::{json, Value};
 
+pub use pm_core;
+
 /// Linear API adapter. Authenticates via a Linear API token.
 pub struct LinearAdapter {
     client: Client,
@@ -93,6 +95,37 @@ fn map_issue(v: &Value) -> Issue {
     }
 }
 
+fn map_customer_issue(v: &Value) -> CustomerIssueView {
+    let label_nodes = v["labels"]["nodes"].as_array().cloned().unwrap_or_default();
+    let has_public_label = label_nodes
+        .iter()
+        .any(|label| label["name"].as_str() == Some("public"));
+    let labels = label_nodes
+        .iter()
+        .filter_map(|label| label["name"].as_str())
+        .filter(|name| !name.starts_with("internal:"))
+        .filter(|name| !name.starts_with("customer:"))
+        .map(String::from)
+        .collect();
+
+    CustomerIssueView {
+        platform: "linear".to_string(),
+        identifier: str_field(v, "identifier"),
+        title: str_field(v, "title"),
+        state_name: str_field(&v["state"], "name"),
+        state_type: str_field(&v["state"], "type"),
+        assignee_name: v["assignee"]["name"].as_str().map(String::from),
+        assignee_avatar_url: v["assignee"]["avatarUrl"].as_str().map(String::from),
+        labels,
+        description: if has_public_label {
+            v["description"].as_str().map(String::from)
+        } else {
+            None
+        },
+        updated_at: str_field(v, "updatedAt"),
+    }
+}
+
 fn map_project(v: &Value) -> Project {
     Project {
         id: str_field(v, "id"),
@@ -146,7 +179,30 @@ fn str_field(v: &Value, key: &str) -> String {
     v[key].as_str().unwrap_or_default().to_string()
 }
 
+fn is_valid_customer_key(key: &str) -> bool {
+    if key.is_empty() || key.len() > 64 {
+        return false;
+    }
+    let first = key.as_bytes()[0];
+    if !first.is_ascii_lowercase() && !first.is_ascii_digit() {
+        return false;
+    }
+    key.bytes()
+        .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-' || b == b'_')
+}
+
+fn build_customer_filter(customer_key: &str) -> Value {
+    json!({
+        "labels": {
+            "some": {
+                "name": { "eq": format!("customer:{customer_key}") }
+            }
+        }
+    })
+}
+
 const ISSUE_FIELDS: &str = "id identifier title description priority createdAt updatedAt state { name } assignee { id name } project { id name } labels { nodes { name } }";
+const CUSTOMER_ISSUE_FIELDS: &str = "identifier title description updatedAt state { name type } assignee { name avatarUrl } labels { nodes { name } }";
 const PROJECT_FIELDS: &str = "id name description state createdAt updatedAt";
 const TEAM_FIELDS: &str = "id name key";
 const COMMENT_FIELDS: &str = "id body createdAt issue { id } user { name }";
@@ -172,6 +228,31 @@ impl PmAdapter for LinearAdapter {
             .cloned()
             .unwrap_or_default();
         Ok(nodes.iter().map(map_issue).collect())
+    }
+
+    async fn list_customer_issues(
+        &self,
+        filter: CustomerIssueFilter,
+    ) -> PmResult<Vec<CustomerIssueView>> {
+        if !is_valid_customer_key(&filter.customer_key) {
+            return Ok(Vec::new());
+        }
+
+        let limit = filter.page.limit.unwrap_or(50);
+        let q = format!(
+            "query($first: Int, $after: String, $filter: IssueFilter!) {{ issues(first: $first, after: $after, filter: $filter, orderBy: updatedAt) {{ nodes {{ {CUSTOMER_ISSUE_FIELDS} }} }} }}"
+        );
+        let vars = json!({
+            "first": limit,
+            "after": filter.page.after,
+            "filter": build_customer_filter(&filter.customer_key),
+        });
+        let data = self.graphql(&q, vars).await?;
+        let nodes = data["issues"]["nodes"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
+        Ok(nodes.iter().map(map_customer_issue).collect())
     }
 
     async fn get_issue(&self, id: &str) -> PmResult<Issue> {

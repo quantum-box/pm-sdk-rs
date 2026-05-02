@@ -20,6 +20,35 @@ pub struct Issue {
     pub updated_at: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CustomerIssueView {
+    pub platform: String,
+    pub identifier: String,
+    pub title: String,
+    pub state_name: String,
+    pub state_type: String,
+    pub assignee_name: Option<String>,
+    pub assignee_avatar_url: Option<String>,
+    pub labels: Vec<String>,
+    pub description: Option<String>,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct CustomerIssueFilter {
+    pub customer_key: String,
+    pub page: PageRequest,
+}
+
+impl CustomerIssueFilter {
+    pub fn new(customer_key: impl Into<String>) -> Self {
+        Self {
+            customer_key: customer_key.into(),
+            page: PageRequest::default(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IssuePriority {
     None,
