@@ -37,6 +37,9 @@ pub struct CustomerIssueView {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CustomerIssueFilter {
     pub customer_key: String,
+    pub project_ids: Vec<String>,
+    pub label_names: Vec<String>,
+    pub issue_identifiers: Vec<String>,
     pub page: PageRequest,
 }
 
@@ -44,8 +47,52 @@ impl CustomerIssueFilter {
     pub fn new(customer_key: impl Into<String>) -> Self {
         Self {
             customer_key: customer_key.into(),
+            project_ids: Vec::new(),
+            label_names: Vec::new(),
+            issue_identifiers: Vec::new(),
             page: PageRequest::default(),
         }
+    }
+
+    pub fn with_project_ids(
+        mut self,
+        project_ids: impl IntoIterator<Item = impl Into<String>>,
+    ) -> Self {
+        self.project_ids = project_ids
+            .into_iter()
+            .map(Into::into)
+            .filter(|id| !id.trim().is_empty())
+            .collect();
+        self
+    }
+
+    pub fn with_label_names(
+        mut self,
+        label_names: impl IntoIterator<Item = impl Into<String>>,
+    ) -> Self {
+        self.label_names = label_names
+            .into_iter()
+            .map(Into::into)
+            .filter(|name| !name.trim().is_empty())
+            .collect();
+        self
+    }
+
+    pub fn with_issue_identifiers(
+        mut self,
+        issue_identifiers: impl IntoIterator<Item = impl Into<String>>,
+    ) -> Self {
+        self.issue_identifiers = issue_identifiers
+            .into_iter()
+            .map(Into::into)
+            .filter(|identifier| !identifier.trim().is_empty())
+            .collect();
+        self
+    }
+
+    pub fn with_page(mut self, page: PageRequest) -> Self {
+        self.page = page;
+        self
     }
 }
 

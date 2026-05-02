@@ -126,6 +126,39 @@ fn map_customer_issue(v: &Value) -> CustomerIssueView {
     }
 }
 
+fn customer_issue_matches_filter(v: &Value, filter: &CustomerIssueFilter) -> bool {
+    if !filter.project_ids.is_empty() {
+        let project_id = v["project"]["id"].as_str().unwrap_or_default();
+        if !filter.project_ids.iter().any(|id| id == project_id) {
+            return false;
+        }
+    }
+
+    if !filter.label_names.is_empty() {
+        let label_nodes = v["labels"]["nodes"].as_array().cloned().unwrap_or_default();
+        let has_allowed_label = label_nodes
+            .iter()
+            .filter_map(|label| label["name"].as_str())
+            .any(|name| filter.label_names.iter().any(|allowed| allowed == name));
+        if !has_allowed_label {
+            return false;
+        }
+    }
+
+    if !filter.issue_identifiers.is_empty() {
+        let identifier = v["identifier"].as_str().unwrap_or_default();
+        if !filter
+            .issue_identifiers
+            .iter()
+            .any(|allowed| allowed == identifier)
+        {
+            return false;
+        }
+    }
+
+    true
+}
+
 fn map_project(v: &Value) -> Project {
     Project {
         id: str_field(v, "id"),
@@ -202,7 +235,7 @@ fn build_customer_filter(customer_key: &str) -> Value {
 }
 
 const ISSUE_FIELDS: &str = "id identifier title description priority createdAt updatedAt state { name } assignee { id name } project { id name } labels { nodes { name } }";
-const CUSTOMER_ISSUE_FIELDS: &str = "identifier title description updatedAt state { name type } assignee { name avatarUrl } labels { nodes { name } }";
+const CUSTOMER_ISSUE_FIELDS: &str = "identifier title description updatedAt state { name type } assignee { name avatarUrl } project { id } labels { nodes { name } }";
 const PROJECT_FIELDS: &str = "id name description state createdAt updatedAt";
 const TEAM_FIELDS: &str = "id name key";
 const COMMENT_FIELDS: &str = "id body createdAt issue { id } user { name }";
@@ -252,7 +285,11 @@ impl PmAdapter for LinearAdapter {
             .as_array()
             .cloned()
             .unwrap_or_default();
-        Ok(nodes.iter().map(map_customer_issue).collect())
+        Ok(nodes
+            .iter()
+            .filter(|node| customer_issue_matches_filter(node, &filter))
+            .map(map_customer_issue)
+            .collect())
     }
 
     async fn get_issue(&self, id: &str) -> PmResult<Issue> {
