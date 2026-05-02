@@ -14,6 +14,16 @@ pub trait PmAdapter: Send + Sync {
 
     async fn list_issues(&self, page: PageRequest) -> PmResult<Vec<Issue>>;
 
+    async fn list_customer_issues(
+        &self,
+        filter: CustomerIssueFilter,
+    ) -> PmResult<Vec<CustomerIssueView>> {
+        let _ = filter;
+        Err(crate::PmError::UnsupportedOperation(
+            "list_customer_issues".into(),
+        ))
+    }
+
     async fn get_issue(&self, id: &str) -> PmResult<Issue>;
 
     async fn create_issue(&self, input: CreateIssueRequest) -> PmResult<Issue>;

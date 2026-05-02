@@ -60,6 +60,85 @@ async fn list_issues_returns_mapped_issues() {
 }
 
 #[tokio::test]
+async fn list_customer_issues_filters_and_masks() {
+    let mut server = Server::new_async().await;
+    let _mock = server
+        .mock("POST", "/graphql")
+        .match_body(Matcher::Regex("customer:acme".into()))
+        .with_status(200)
+        .with_body(gql_response(json!({
+            "issues": {
+                "nodes": [
+                    {
+                        "identifier": "PLT-123",
+                        "title": "Customer-visible work",
+                        "description": "This is public.",
+                        "updatedAt": "2026-05-01T00:00:00Z",
+                        "state": { "name": "In Progress", "type": "started" },
+                        "assignee": {
+                            "name": "Alice",
+                            "avatarUrl": "https://example.com/alice.png"
+                        },
+                        "labels": {
+                            "nodes": [
+                                { "name": "public" },
+                                { "name": "roadmap" },
+                                { "name": "internal:ops" },
+                                { "name": "customer:acme" }
+                            ]
+                        }
+                    },
+                    {
+                        "identifier": "PLT-124",
+                        "title": "Private notes hidden",
+                        "description": "Do not expose",
+                        "updatedAt": "2026-05-02T00:00:00Z",
+                        "state": { "name": "Backlog", "type": "backlog" },
+                        "assignee": null,
+                        "labels": { "nodes": [{ "name": "roadmap" }] }
+                    }
+                ]
+            }
+        })))
+        .create_async()
+        .await;
+
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
+    let issues = adapter
+        .list_customer_issues(CustomerIssueFilter {
+            customer_key: "acme".into(),
+            page: PageRequest {
+                limit: Some(10),
+                ..Default::default()
+            },
+        })
+        .await
+        .unwrap();
+
+    assert_eq!(issues.len(), 2);
+    assert_eq!(issues[0].platform, "linear");
+    assert_eq!(issues[0].identifier, "PLT-123");
+    assert_eq!(issues[0].state_type, "started");
+    assert_eq!(issues[0].assignee_name.as_deref(), Some("Alice"));
+    assert_eq!(issues[0].labels, vec!["public", "roadmap"]);
+    assert_eq!(issues[0].description.as_deref(), Some("This is public."));
+    assert_eq!(issues[1].labels, vec!["roadmap"]);
+    assert!(issues[1].description.is_none());
+}
+
+#[tokio::test]
+async fn list_customer_issues_rejects_invalid_key_without_request() {
+    let server = Server::new_async().await;
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
+    let issues = adapter
+        .list_customer_issues(CustomerIssueFilter::new("bad key"))
+        .await
+        .unwrap();
+
+    assert!(issues.is_empty());
+}
+
+#[tokio::test]
 async fn create_issue_sends_mutation() {
     let mut server = Server::new_async().await;
     let _mock = server
