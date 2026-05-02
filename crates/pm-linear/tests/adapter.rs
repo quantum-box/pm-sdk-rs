@@ -75,6 +75,7 @@ async fn list_customer_issues_filters_and_masks() {
                         "description": "This is public.",
                         "updatedAt": "2026-05-01T00:00:00Z",
                         "state": { "name": "In Progress", "type": "started" },
+                        "project": { "id": "prj_customer" },
                         "assignee": {
                             "name": "Alice",
                             "avatarUrl": "https://example.com/alice.png"
@@ -94,6 +95,7 @@ async fn list_customer_issues_filters_and_masks() {
                         "description": "Do not expose",
                         "updatedAt": "2026-05-02T00:00:00Z",
                         "state": { "name": "Backlog", "type": "backlog" },
+                        "project": { "id": "prj_customer" },
                         "assignee": null,
                         "labels": { "nodes": [{ "name": "roadmap" }] }
                     }
@@ -105,13 +107,10 @@ async fn list_customer_issues_filters_and_masks() {
 
     let adapter = LinearAdapter::new("token").with_base_url(server.url());
     let issues = adapter
-        .list_customer_issues(CustomerIssueFilter {
-            customer_key: "acme".into(),
-            page: PageRequest {
-                limit: Some(10),
-                ..Default::default()
-            },
-        })
+        .list_customer_issues(CustomerIssueFilter::new("acme").with_page(PageRequest {
+            limit: Some(10),
+            ..Default::default()
+        }))
         .await
         .unwrap();
 
@@ -124,6 +123,102 @@ async fn list_customer_issues_filters_and_masks() {
     assert_eq!(issues[0].description.as_deref(), Some("This is public."));
     assert_eq!(issues[1].labels, vec!["roadmap"]);
     assert!(issues[1].description.is_none());
+}
+
+#[tokio::test]
+async fn list_customer_issues_applies_publication_allowlists() {
+    let mut server = Server::new_async().await;
+    let _mock = server
+        .mock("POST", "/graphql")
+        .match_body(Matcher::Regex("customer:acme".into()))
+        .with_status(200)
+        .with_body(gql_response(json!({
+            "issues": {
+                "nodes": [
+                    {
+                        "identifier": "PLT-10",
+                        "title": "Visible issue",
+                        "description": "Visible",
+                        "updatedAt": "2026-05-01T00:00:00Z",
+                        "state": { "name": "In Progress", "type": "started" },
+                        "project": { "id": "prj_allowed" },
+                        "assignee": null,
+                        "labels": {
+                            "nodes": [
+                                { "name": "public" },
+                                { "name": "roadmap" },
+                                { "name": "customer:acme" }
+                            ]
+                        }
+                    },
+                    {
+                        "identifier": "PLT-11",
+                        "title": "Wrong project",
+                        "description": "Hidden",
+                        "updatedAt": "2026-05-01T00:00:00Z",
+                        "state": { "name": "Todo", "type": "unstarted" },
+                        "project": { "id": "prj_other" },
+                        "assignee": null,
+                        "labels": {
+                            "nodes": [
+                                { "name": "public" },
+                                { "name": "roadmap" },
+                                { "name": "customer:acme" }
+                            ]
+                        }
+                    },
+                    {
+                        "identifier": "PLT-12",
+                        "title": "Wrong label",
+                        "description": "Hidden",
+                        "updatedAt": "2026-05-01T00:00:00Z",
+                        "state": { "name": "Todo", "type": "unstarted" },
+                        "project": { "id": "prj_allowed" },
+                        "assignee": null,
+                        "labels": {
+                            "nodes": [
+                                { "name": "public" },
+                                { "name": "ops" },
+                                { "name": "customer:acme" }
+                            ]
+                        }
+                    },
+                    {
+                        "identifier": "PLT-13",
+                        "title": "Wrong identifier",
+                        "description": "Hidden",
+                        "updatedAt": "2026-05-01T00:00:00Z",
+                        "state": { "name": "Todo", "type": "unstarted" },
+                        "project": { "id": "prj_allowed" },
+                        "assignee": null,
+                        "labels": {
+                            "nodes": [
+                                { "name": "public" },
+                                { "name": "roadmap" },
+                                { "name": "customer:acme" }
+                            ]
+                        }
+                    }
+                ]
+            }
+        })))
+        .create_async()
+        .await;
+
+    let adapter = LinearAdapter::new("token").with_base_url(server.url());
+    let issues = adapter
+        .list_customer_issues(
+            CustomerIssueFilter::new("acme")
+                .with_project_ids(["prj_allowed"])
+                .with_label_names(["roadmap"])
+                .with_issue_identifiers(["PLT-10"]),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(issues.len(), 1);
+    assert_eq!(issues[0].identifier, "PLT-10");
+    assert_eq!(issues[0].labels, vec!["public", "roadmap"]);
 }
 
 #[tokio::test]
