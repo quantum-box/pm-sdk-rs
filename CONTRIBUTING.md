@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Rust stable (latest) — install via [rustup](https://rustup.rs/)
+- Rust stable (latest) - install via [rustup](https://rustup.rs/)
 - `cargo-nextest` for running tests (`cargo install cargo-nextest`)
 
 ## Setup
@@ -10,7 +10,7 @@
 ```bash
 git clone https://github.com/quantum-box/pm-sdk-rs.git
 cd pm-sdk-rs
-rustup show   # installs toolchain from rust-toolchain.toml if present
+rustup default stable
 ```
 
 ## Build
@@ -49,7 +49,7 @@ Both must pass before opening a PR.
 
 - Branch name: `feature/<short-description>` (e.g. `feature/plt-123-add-notion-adapter`)
 - PR title must follow [Conventional Commits](https://www.conventionalcommits.org/):
-  `<type>(<scope>): <description>` — e.g. `feat(pm-linear): add team filter support`
+  `<type>(<scope>): <description>` - e.g. `feat(pm-linear): add team filter support`
 - One logical change per PR.
 - `cargo clippy --workspace -- -D warnings` must pass.
 - `cargo fmt --all -- --check` must pass.

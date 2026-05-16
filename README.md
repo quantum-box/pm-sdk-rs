@@ -17,19 +17,20 @@ Rust SDK for project management platforms (Linear, Asana).
 ## Installation
 
 Use this repository as a Git dependency. Add the adapter you need to your
-`Cargo.toml`:
+`Cargo.toml`. Pin `branch`, `tag`, or `rev` in production applications when you
+need reproducible builds.
 
 ```toml
 [dependencies]
-pm-core = { git = "https://github.com/quantum-box/pm-sdk-rs" }
-pm-linear = { git = "https://github.com/quantum-box/pm-sdk-rs" } # for Linear
-pm-asana = { git = "https://github.com/quantum-box/pm-sdk-rs" }  # for Asana
+pm-core = { git = "https://github.com/quantum-box/pm-sdk-rs", branch = "main" }
+pm-linear = { git = "https://github.com/quantum-box/pm-sdk-rs", branch = "main" } # for Linear
+pm-asana = { git = "https://github.com/quantum-box/pm-sdk-rs", branch = "main" }  # for Asana
 ```
 
 Install the CLI directly from GitHub:
 
 ```bash
-cargo install --git https://github.com/quantum-box/pm-sdk-rs pm-cli
+cargo install --git https://github.com/quantum-box/pm-sdk-rs --locked pm-cli
 ```
 
 Or build from source:
