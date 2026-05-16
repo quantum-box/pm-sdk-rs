@@ -1,35 +1,44 @@
 # pm-sdk-rs
 
 [![CI](https://github.com/quantum-box/pm-sdk-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/quantum-box/pm-sdk-rs/actions/workflows/ci.yml)
-[![Crates.io](https://img.shields.io/crates/v/pm-core.svg)](https://crates.io/crates/pm-core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Rust SDK for project management platforms (Linear, Asana).
 
 ## Crates
 
-| Crate | Description | crates.io |
-|-------|-------------|-----------|
-| `pm-core` | Platform-agnostic traits and domain models | [![](https://img.shields.io/crates/v/pm-core.svg)](https://crates.io/crates/pm-core) |
-| `pm-linear` | Linear GraphQL adapter | [![](https://img.shields.io/crates/v/pm-linear.svg)](https://crates.io/crates/pm-linear) |
-| `pm-asana` | Asana REST adapter | [![](https://img.shields.io/crates/v/pm-asana.svg)](https://crates.io/crates/pm-asana) |
-| `pm-cli` | CLI tool (`pm-sdk`) | [![](https://img.shields.io/crates/v/pm-cli.svg)](https://crates.io/crates/pm-cli) |
+| Crate | Description |
+|-------|-------------|
+| `pm-core` | Platform-agnostic traits and domain models |
+| `pm-linear` | Linear GraphQL adapter |
+| `pm-asana` | Asana REST adapter |
+| `pm-cli` | CLI tool (`pm-sdk`) |
 
 ## Installation
 
-Add the adapter you need to your `Cargo.toml`:
+Use this repository as a Git dependency. Add the adapter you need to your
+`Cargo.toml`:
 
 ```toml
 [dependencies]
-pm-core = "0.1"
-pm-linear = "0.1"   # for Linear
-pm-asana  = "0.1"   # for Asana
+pm-core = { git = "https://github.com/quantum-box/pm-sdk-rs" }
+pm-linear = { git = "https://github.com/quantum-box/pm-sdk-rs" } # for Linear
+pm-asana = { git = "https://github.com/quantum-box/pm-sdk-rs" }  # for Asana
 ```
 
-Or install the CLI:
+Install the CLI directly from GitHub:
 
 ```bash
-cargo install pm-cli
+cargo install --git https://github.com/quantum-box/pm-sdk-rs pm-cli
+```
+
+Or build from source:
+
+```bash
+git clone https://github.com/quantum-box/pm-sdk-rs.git
+cd pm-sdk-rs
+cargo build --workspace
+cargo run -p pm-cli -- --help
 ```
 
 ## Quick Start
@@ -83,6 +92,17 @@ pm-sdk search --query "auth bug"
 | `LINEAR_API_KEY` | Linear only | Linear personal API key |
 | `ASANA_PAT` | Asana only | Asana Personal Access Token |
 | `ASANA_WORKSPACE_GID` | Asana (search) | Asana workspace GID |
+
+## Examples
+
+Runnable examples are available in [`examples/examples`](examples/examples).
+
+```bash
+cargo run -p examples --example linear_list_issues
+cargo run -p examples --example asana_list_tasks
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local development commands.
 
 ## License
 
