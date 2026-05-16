@@ -1,14 +1,12 @@
-// Asana API からタスクを取得して表示する例
-// USAGE: ASANA_ACCESS_TOKEN=xxx ASANA_WORKSPACE_GID=xxx cargo run --example fetch_asana_tasks
+// Fetch tasks from Asana and print a compact table.
+// USAGE: ASANA_PAT=xxx ASANA_WORKSPACE_GID=xxx cargo run --example fetch_asana_tasks
 
 use pm_asana::AsanaAdapter;
 use pm_core::{PageRequest, PmAdapter};
 
 #[tokio::main]
 async fn main() {
-    let token = std::env::var("ASANA_ACCESS_TOKEN")
-        .or_else(|_| std::env::var("ASANA_PAT"))
-        .expect("ASANA_ACCESS_TOKEN or ASANA_PAT must be set");
+    let token = std::env::var("ASANA_PAT").expect("ASANA_PAT must be set");
     let workspace_gid =
         std::env::var("ASANA_WORKSPACE_GID").expect("ASANA_WORKSPACE_GID must be set");
 
@@ -54,8 +52,8 @@ fn truncate(s: &str, max_chars: usize) -> String {
     if s.chars().count() <= max_chars {
         s.to_string()
     } else {
-        let mut result: String = s.chars().take(max_chars - 1).collect();
-        result.push('…');
+        let mut result: String = s.chars().take(max_chars.saturating_sub(3)).collect();
+        result.push_str("...");
         result
     }
 }
